@@ -7,6 +7,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.data.ApiService
 import com.example.myapplication.data.DataRepository
@@ -54,19 +58,28 @@ fun GreetingPreview() {
 }
 
 class MainActivity : ComponentActivity() {
+
+    private val retrofit = Retrofit.Builder()
+        .baseUrl("https://api.thecatapi.com/") //хост передаем прям вот сюда
+        .addConverterFactory(
+            Json { ignoreUnknownKeys = true }
+                .asConverterFactory("application/json; charset=UTF8".toMediaType()) //для таких форматов используй конвектор котлин сериализации
+        )
+        .build()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val json = Json { ignoreUnknownKeys = true }
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://api.thecatapi.com/")
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
         val api = retrofit.create(ApiService::class.java)
         val repo = DataRepository(api)
-        val vm = MainViewModel(repo)
+        val factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return MainViewModel(repo, SavedStateHandle()) as T
+            }
+        }
 
         setContent {
+            val vm: MainViewModel = viewModel(factory = factory)
             MainScreen(vm)
         }
     }

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">My Application</string>
+    <string name="retry">Повторить</string>
+    <string name="image_number">Картинка №%1$d</string>
 </resources>
